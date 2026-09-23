@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Makki Madni Chemical Store - Management System</title>
+  <style>
+    :root {
+      --primary: #1b4332;
+      --primary-light: #2d6a4f;
+      --accent: #d8f3dc;
+      --danger: #b7094c;
+      --dark: #212529;
+      --light: #f8f9fa;
+      --border: #dee2e6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: #f0f2f5;
+      color: var(--dark);
+      padding-bottom: 40px;
+    }
+
+    header {
+      background-color: var(--primary);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      letter-spacing: 1px;
+    }
+
+    nav {
+      display: flex;
+      justify-content: center;
+      background-color: var(--primary-light);
+      margin-bottom: 20px;
+    }
+
+    nav button {
+      background: none;
+      border: none;
+      color: white;
+      padding: 14px 20px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    nav button:hover, nav button.active {
+      background-color: rgba(255, 255, 255, 0.2);
+      font-weight: bold;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      margin-bottom: 20px;
+    }
+
+    h2 {
+      margin-bottom: 15px;
+      color: var(--primary);
+      border-bottom: 2px solid var(--accent);
+      padding-bottom: 5px;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 15px;
+    }
+
+    .form-row .form-group {
+      flex: 1;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+
+    button.btn-primary {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+
+    button.btn-primary:hover {
+      background-color: var(--primary-light);
+    }
+
+    button.btn-danger {
+      background-color: var(--danger);
+      color: white;
+      border: none;
+      cursor: pointer;
+      width: auto;
+      padding: 5px 10px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    table, th, td {
+      border: 1px solid var(--border);
+    }
+
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background-color: var(--light);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Print Styles */
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printable-receipt, #printable-receipt * {
+        visibility: visible;
+      }
+      #printable-receipt {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20px;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+
+    #receipt-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .receipt-box {
+      background: white;
+      padding: 30px;
+      border-radius: 8px;
+      width: 400px;
+      max-width: 90%;
+    }
+
+    .receipt-header {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .receipt-header h3 {
+      font-size: 1.4rem;
+      color: var(--primary);
+    }
+
+    .receipt-details {
+      margin-bottom: 15px;
+      font-size: 0.9rem;
+    }
+
+    .receipt-footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="no-print">
+    <h1>MAKKI MADNI CHEMICAL STORE</h1>
+    <p>Store Management System</p>
+  </header>
+
+  <nav class="no-print">
+    <button class="tab-btn active" onclick="switchTab('billing')">Billing & POS</button>
+    <button class="tab-btn" onclick="switchTab('stock')">Monthly Stock</button>
+    <button class="tab-btn" onclick="switchTab('expenses')">Expenses</button>
+  </nav>
+
+  <div class="container no-print">
+
+    <!-- BILLING SECTION -->
+    <div id="billing" class="tab-content active">
+      <div class="card">
+        <h2>Create Bill</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Select Chemical/Product</label>
+            <select id="bill-product" onchange="updateUnitPrice()">
+              <option value="">-- Select Item --</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Price / Unit</label>
+            <input type="number" id="bill-price" readonly placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>Quantity</label>
+            <input type="number" id="bill-qty" min="1" value="1">
+          </div>
+          <div class="form-group" style="align-self: flex-end;">
+            <button class="btn-primary" onclick="addToBill()">Add Item</button>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Unit Price</th>
+              <th>Qty</th>
+              <th>Total</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="bill-items"></tbody>
+        </table>
+
+        <div style="margin-top: 20px; text-align: right;">
+          <h3>Grand Total: <span id="bill-total">0.00</span></h3>
+          <br>
+          <button class="btn-primary" style="width: 200px;" onclick="generateReceipt()">Generate & Print Bill</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STOCK MANAGEMENT SECTION -->
+    <div id="stock" class="tab-content">
+      <div class="card">
+        <h2>Stock Inventory Management</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Item / Chemical Name</label>
+            <input type="text" id="stock-name" placeholder="e.g. Acetone">
+          </div>
+          <div class="form-group">
+            <label>Stock Quantity</label>
+            <input type="number" id="stock-qty" placeholder="0">
+          </div>
+          <div class="form-group">
+            <label>Unit Price</label>
+            <input type="number" id="stock-price" placeholder="0.00">
+          </div>
+          <div class="form-group" style="align-self: flex-end;">
+            <button class="btn-primary" onclick="addStock()">Save Stock</button>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Product Name</th>
+              <th>Available Stock Qty</th>
+              <th>Unit Price</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="stock-list"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- EXPENSES SECTION -->
+    <div id="expenses" class="tab-content">
+      <div class="card">
+        <h2>Monthly Expenses</h2>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Expense Description</label>
+            <input type="text" id="expense-title" placeholder="e.g. Shop Rent, Electricity">
+          </div>
+          <div class="form-group">
+            <label>Amount</label>
+            <input type="number" id="expense-amount" placeholder="0.00">
+          </div>
+          <div class="form-group" style="align-self: flex-end;">
+            <button class="btn-primary" onclick="addExpense()">Add Expense</button>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Amount</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="expense-list"></tbody>
+        </table>
+
+        <div style="margin-top: 20px; text-align: right;">
+          <h3>Total Expenses: <span id="expense-total">0.00</span></h3>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PRINTABLE RECEIPT MODAL -->
+  <div id="receipt-modal">
+    <div class="receipt-box" id="printable-receipt">
+      <div class="receipt-header">
+        <h3>MAKKI MADNI CHEMICAL STORE</h3>
+        <p style="font-size: 0.85rem;">Chemical Supplier & Wholesaler</p>
+        <hr style="margin: 10px 0;">
+      </div>
+      <div class="receipt-details">
+        <p><strong>Date & Time:</strong> <span id="receipt-datetime"></span></p>
+        <p><strong>Receipt #:</strong> <span id="receipt-id"></span></p>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="receipt-items"></tbody>
+      </table>
+      <hr style="margin: 10px 0;">
+      <h3 style="text-align: right;">Total: <span id="receipt-total">0.00</span></h3>
+      <div class="receipt-footer">
+        <p>Thank you for doing business with us!</p>
+      </div>
+      <div class="no-print" style="margin-top: 20px; display: flex; gap: 10px;">
+        <button class="btn-primary" onclick="window.print()">Print Receipt</button>
+        <button class="btn-danger" style="width:100%" onclick="closeReceipt()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Local storage state initialization
+    let inventory = JSON.parse(localStorage.getItem('mm_stock')) || [];
+    let currentBill = [];
+    let expenses = JSON.parse(localStorage.getItem('mm_expenses')) || [];
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+      
+      if(tabId === 'billing') populateProductDropdown();
+    }
+
+    // --- STOCK FUNCTIONS ---
+    function addStock() {
+      const name = document.getElementById('stock-name').value.trim();
+      const qty = parseFloat(document.getElementById('stock-qty').value);
+      const price = parseFloat(document.getElementById('stock-price').value);
+
+      if(!name || isNaN(qty) || isNaN(price)) {
+        alert('Please fill out all stock fields accurately.');
+        return;
+      }
+
+      const existingIndex = inventory.findIndex(item => item.name.toLowerCase() === name.toLowerCase());
+      if(existingIndex > -1) {
+        inventory[existingIndex].qty += qty;
+        inventory[existingIndex].price = price;
+      } else {
+        inventory.push({ id: Date.now(), name, qty, price });
+      }
+
+      saveStock();
+      renderStock();
+      document.getElementById('stock-name').value = '';
+      document.getElementById('stock-qty').value = '';
+      document.getElementById('stock-price').value = '';
+    }
+
+    function deleteStock(id) {
+      inventory = inventory.filter(item => item.id !== id);
+      saveStock();
+      renderStock();
+    }
+
+    function saveStock() {
+      localStorage.setItem('mm_stock', JSON.stringify(inventory));
+    }
+
+    function renderStock() {
+      const tbody = document.getElementById('stock-list');
+      tbody.innerHTML = '';
+      inventory.forEach(item => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.id}</td>
+            <td>${item.name}</td>
+            <td>${item.qty}</td>
+            <td>${item.price.toFixed(2)}</td>
+            <td><button class="btn-danger" onclick="deleteStock(${item.id})">Remove</button></td>
+          </tr>
+        `;
+      });
+    }
+
+    // --- BILLING FUNCTIONS ---
+    function populateProductDropdown() {
+      const select = document.getElementById('bill-product');
+      select.innerHTML = '<option value="">-- Select Item --</option>';
+      inventory.forEach(item => {
+        select.innerHTML += `<option value="${item.id}">${item.name} (Stock: ${item.qty})</option>`;
+      });
+    }
+
+    function updateUnitPrice() {
+      const productId = document.getElementById('bill-product').value;
+      const product = inventory.find(i => i.id == productId);
+      document.getElementById('bill-price').value = product ? product.price : 0;
+    }
+
+    function addToBill() {
+      const productId = document.getElementById('bill-product').value;
+      const qty = parseFloat(document.getElementById('bill-qty').value);
+      const product = inventory.find(i => i.id == productId);
+
+      if(!product || isNaN(qty) || qty <= 0) {
+        alert('Select a valid product and enter quantity.');
+        return;
+      }
+
+      if(qty > product.qty) {
+        alert('Entered quantity exceeds available stock.');
+        return;
+      }
+
+      const itemTotal = product.price * qty;
+      currentBill.push({ id: product.id, name: product.name, price: product.price, qty, total: itemTotal });
+      renderBill();
+    }
+
+    function renderBill() {
+      const tbody = document.getElementById('bill-items');
+      tbody.innerHTML = '';
+      let grandTotal = 0;
+
+      currentBill.forEach((item, index) => {
+        grandTotal += item.total;
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.name}</td>
+            <td>${item.price.toFixed(2)}</td>
+            <td>${item.qty}</td>
+            <td>${item.total.toFixed(2)}</td>
+            <td><button class="btn-danger" onclick="removeBillItem(${index})">Remove</button></td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('bill-total').innerText = grandTotal.toFixed(2);
+    }
+
+    function removeBillItem(index) {
+      currentBill.splice(index, 1);
+      renderBill();
+    }
+
+    function generateReceipt() {
+      if(currentBill.length === 0) {
+        alert('Add items to the bill before printing.');
+        return;
+      }
+
+      const receiptItems = document.getElementById('receipt-items');
+      receiptItems.innerHTML = '';
+      let grandTotal = 0;
+
+      currentBill.forEach(item => {
+        grandTotal += item.total;
+        receiptItems.innerHTML += `
+          <tr>
+            <td>${item.name}</td>
+            <td>${item.qty}</td>
+            <td>${item.price.toFixed(2)}</td>
+            <td>${item.total.toFixed(2)}</td>
+          </tr>
+        `;
+
+        // Deduct inventory
+        const stockItem = inventory.find(i => i.id == item.id);
+        if(stockItem) stockItem.qty -= item.qty;
+      });
+
+      // Save updated stock
+      saveStock();
+
+      document.getElementById('receipt-total').innerText = grandTotal.toFixed(2);
+      document.getElementById('receipt-datetime').innerText = new Date().toLocaleString();
+      document.getElementById('receipt-id').innerText = 'MM-' + Math.floor(100000 + Math.random() * 900000);
+
+      document.getElementById('receipt-modal').style.display = 'flex';
+    }
+
+    function closeReceipt() {
+      document.getElementById('receipt-modal').style.display = 'none';
+      currentBill = [];
+      renderBill();
+      populateProductDropdown();
+    }
+
+    // --- EXPENSES FUNCTIONS ---
+    function addExpense() {
+      const title = document.getElementById('expense-title').value.trim();
+      const amount = parseFloat(document.getElementById('expense-amount').value);
+
+      if(!title || isNaN(amount)) {
+        alert('Please enter valid expense details.');
+        return;
+      }
+
+      expenses.push({ id: Date.now(), title, amount, date: new Date().toLocaleDateString() });
+      localStorage.setItem('mm_expenses', JSON.stringify(expenses));
+      
+      document.getElementById('expense-title').value = '';
+      document.getElementById('expense-amount').value = '';
+      renderExpenses();
+    }
+
+    function deleteExpense(id) {
+      expenses = expenses.filter(e => e.id !== id);
+      localStorage.setItem('mm_expenses', JSON.stringify(expenses));
+      renderExpenses();
+    }
+
+    function renderExpenses() {
+      const tbody = document.getElementById('expense-list');
+      tbody.innerHTML = '';
+      let total = 0;
+
+      expenses.forEach(item => {
+        total += item.amount;
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.date}</td>
+            <td>${item.title}</td>
+            <td>${item.amount.toFixed(2)}</td>
+            <td><button class="btn-danger" onclick="deleteExpense(${item.id})">Remove</button></td>
+          </tr>
+        `;
+      });
+
+      document.getElementById('expense-total').innerText = total.toFixed(2);
+    }
+
+    // Initial load
+    renderStock();
+    renderExpenses();
+    populateProductDropdown();
+  </script>
+
+</body>
+</html>
